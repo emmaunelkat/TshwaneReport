@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <!-- ── Back + Title ──────────────────────────────────────────── -->
+  <div class="form-header">
+    <a href="{% url 'reportsapp:home' %}" class="back-btn">← Back</a>
+    <h1 class="form-title">📝 Register Account</h1>
+  </div>
+
+  <!-- ── Registration Form ─────────────────────────────────────── -->
+  <div class="form-card">
+    <form method="post">
+      {% csrf_token %}
+      
+      {% if form.errors %}
+      <div class="form-errors" style="background: #fee; color: #c00; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+        <p><strong>Please correct the errors below:</strong></p>
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <p>• {{ error }}</p>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">First Name</label>
+        {{ form.first_name }}
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">Last Name</label>
+        {{ form.last_name }}
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">Email (must be @gmail.com)</label>
+        {{ form.email }}
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">ID Number (13 digits)</label>
+        {{ form.id_number }}
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">Password</label>
+        {{ form.password }}
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">Confirm Password</label>
+        {{ form.confirm_password }}
+      </div>
+      
+      <button type="submit" class="btn btn--primary btn--full" style="margin-top: 8px;">
+        ✅ Register
+      </button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 16px; color: #666;">
+      Already have an account? 
+      <a href="{% url 'reportsapp:login' %}" style="color: var(--tshwane-green);">Login here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

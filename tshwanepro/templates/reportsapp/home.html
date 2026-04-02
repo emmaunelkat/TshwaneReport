@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block nav_home %}bottom-nav__item--active{% endblock %}
+
+{% block content %}
+<div class="home-page">
+
+  <!-- ── Hero ──────────────────────────────────────────────────── -->
+  <div class="home-hero">
+    <h1 class="home-hero__title">Report a Fault</h1>
+    <p class="home-hero__sub">City of Tshwane – Service Delivery</p>
+  </div>
+
+  <!-- ── GPS Permission Notice (shown if first visit) ─────────── -->
+  <div class="gps-notice" id="gps-notice">
+    <span>📍</span>
+    <span>We'll use your location to log the fault. <a href="#" onclick="showGpsInfo()">Learn more</a></span>
+  </div>
+
+  <!-- ── 4 Fault Category Buttons ─────────────────────────────── -->
+  <div class="category-grid">
+
+    <a href="/report/water/" class="category-card category-card--water">
+      <span class="category-card__icon">💧</span>
+      <span class="category-card__label">Water</span>
+      <span class="category-card__sub">Leaks, no water</span>
+    </a>
+
+    <a href="/report/electricity/" class="category-card category-card--electricity">
+      <span class="category-card__icon">⚡</span>
+      <span class="category-card__label">Electricity</span>
+      <span class="category-card__sub">Outages, faults</span>
+    </a>
+
+    <a href="/report/roads/" class="category-card category-card--roads">
+      <span class="category-card__icon">🚧</span>
+      <span class="category-card__label">Roads</span>
+      <span class="category-card__sub">Potholes, signs</span>
+    </a>
+
+    <a href="/report/waste/" class="category-card category-card--waste">
+      <span class="category-card__icon">🗑️</span>
+      <span class="category-card__label">Waste</span>
+      <span class="category-card__sub">Missed collection</span>
+    </a>
+
+  </div>
+
+  <!-- ── Other Fault Link ──────────────────────────────────────── -->
+  <div class="other-link">
+    <a href="/report/other/">📋 Report another type of fault</a>
+  </div>
+
+  <!-- ── Track My Report Button ───────────────────────────────── -->
+  <div class="track-section">
+    <a href="/track/" class="btn btn--outline btn--full">
+      🔍 Track My Report
+    </a>
+  </div>
+
+  <!-- ── My Recent Reports (session-based, no login required) ─── -->
+  {% if recent_reports %}
+  <div class="recent-section">
+    <h2 class="section-title">My Recent Reports</h2>
+    {% for report in recent_reports %}
+    <a href="/track/{{ report.reference_number }}/" class="recent-card">
+      <span class="recent-card__icon">{{ report.category_icon }}</span>
+      <div class="recent-card__info">
+        <span class="recent-card__ref">{{ report.reference_number }}</span>
+        <span class="recent-card__category">{{ report.get_category_display }}</span>
+      </div>
+      <span class="status-badge status-badge--{{ report.get_status_badge_color }}">
+        {{ report.get_status_display }}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Show GPS info overlay
+  function showGpsInfo() {
+    document.getElementById('gps-overlay').style.display = 'flex';
+  }
+  function dismissOverlay() {
+    document.getElementById('gps-overlay').style.display = 'none';
+  }
+  function allowLocation() {
+    document.getElementById('gps-overlay').style.display = 'none';
+  }
+
+  // Simplified mode voice greeting
+  {% if simplified_mode %}
+  window.addEventListener('load', function() {
+    const greetings = {
+      'en': 'Welcome to TshwaneReport. Tap a button to report a fault.',
+      'zu': 'Wamukelwa ku TshwaneReport. Chofoza inkinobho ukubika inkinga.',
+      'st': 'Rea u amohela ho TshwaneReport. Kgomaretsa konopo ho bega bothata.',
+      'af': 'Welkom by TshwaneReport. Tik n knoppie om n fout te rapporteer.',
+    };
+    speak(greetings['{{ language|escapejs }}'] || greetings['en']);
+  });
+  {% endif %}
+</script>
+{% endblock %}

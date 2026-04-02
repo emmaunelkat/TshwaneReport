@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Report {{ category_label }}{% endblock %}
+{% block nav_report %}bottom-nav__item--active{% endblock %}
+
+{% block content %}
+<div class="form-page">
+
+  <!-- ── Back + Title ──────────────────────────────────────────── -->
+  <div class="form-header">
+    <a href="/" class="back-btn">← Back</a>
+    <h1 class="form-title">
+      {% if category == 'water' %}💧
+      {% elif category == 'electricity' %}⚡
+      {% elif category == 'roads' %}🚧
+      {% elif category == 'waste' %}🗑️
+      {% else %}📋{% endif %}
+      {{ category_label }}
+    </h1>
+  </div>
+
+
+
+  <!-- ── Form ──────────────────────────────────────────────────── -->
+  <form method="post" enctype="multipart/form-data" id="report-form">
+    {% csrf_token %}
+    {{ form.category }}
+    {{ form.language }}
+    {{ form.simplified_mode }}
+    {{ form.latitude }}
+    {{ form.longitude }}
+    {{ form.address }}
+
+    <!-- STEP 1: Location -->
+    <div class="form-card form-card--active" id="step-1">
+      <div class="form-card__header">
+        <span class="step-badge">Step 1</span>
+        <h2>Your Location</h2>
+      </div>
+      <div class="gps-status">
+        <div id="gps-spinner" class="gps-spinner">⏳ Detecting your location…</div>
+        <div id="gps-found" class="gps-found" style="display:none;">
+          ✅ <span id="gps-address">Location captured</span>
+        </div>
+        <div id="gps-error" class="gps-error" style="display:none;">
+          ❌ Could not detect location.
+        </div>
+      </div>
+      <div class="map-placeholder" id="map-box">
+        <span class="map-pin">📍</span>
+        <p id="map-coords">Waiting for GPS…</p>
+      </div>
+       <!-- Google Map Display -->
+       <div id="map-container" style="display:none; margin-top:1rem; border-radius:8px; overflow:hidden; height:300px; border:2px solid var(--tshwane-green);">
+         <div id="google-map" style="width:100%; height:100%;"></div>
+       </div>
+       <p id="drag-hint" style="display:none; margin-top:0.5rem; font-size:12px; color:#888; text-align:center;">
+         📌 Drag the pin to the exact location of the fault
+       </p>
+       <p id="map-link" style="display:none; margin-top:0.5rem; font-size:13px;">
+         <a href="#" id="open-in-google-maps" target="_blank" style="color:var(--tshwane-green);">📍 Open in Google Maps</a>
+       </p>
+
+       <div id="manual-address" style="display:none; margin-top:1rem;">
+        <label class="field-label">Or type your street address:</label>
+        <input type="text" id="address-input" class="form-input"
+               placeholder="e.g. 12 Stanza Bopape Street, Mamelodi"
+               oninput="setManualAddress(this.value)">
+      </div>
+      <button type="button" class="btn btn--ghost btn--sm" onclick="toggleManual()" style="margin-top:.5rem;">
+        ✏️ Enter address manually
+      </button>
+    </div>
+
+    <!-- STEP 2: Photo (Optional) -->
+    <div class="form-card form-card--optional" id="step-2">
+      <div class="form-card__header">
+        <span class="step-badge step-badge--optional">Step 2 – Optional</span>
+        <h2>Add a Photo</h2>
+        <p class="optional-hint">A photo helps us respond faster, but is not required.</p>
+      </div>
+      <label class="photo-upload-btn" for="id_photo">
+        📷 Take or Upload Photo
+      </label>
+      {{ form.photo }}
+      <div id="photo-preview" style="display:none; margin-top:1rem;">
+        <img id="preview-img" src="" alt="Preview" style="max-width:100%;border-radius:8px;">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="clearPhoto()" style="margin-top:.5rem;">✕ Remove</button>
+      </div>
+      <div class="field-group" style="margin-top:1rem;">
+        <label class="field-label">Add a description (optional)</label>
+        {{ form.description }}
+      </div>
+    </div>
+
+    <!-- STEP 3: Submit -->
+    <div class="form-card" id="step-3">
+      <div class="form-card__header">
+        <span class="step-badge">Step 3</span>
+        <h2>Submit Your Report</h2>
+      </div>
+      <div class="submit-summary">
+        <div class="summary-row">
+          <span class="summary-label">Fault type:</span>
+          <span class="summary-value">
+            {% if category == 'water' %}💧{% elif category == 'electricity' %}⚡{% elif category == 'roads' %}🚧{% elif category == 'waste' %}🗑️{% else %}📋{% endif %}
+            {{ category_label }}
+          </span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Location:</span>
+          <span class="summary-value" id="summary-address">Not yet captured</span>
+        </div>
+      </div>
+      <button type="submit" class="btn btn--submit" id="submit-btn" disabled>
+        ✓ Submit Report
+      </button>
+      <p class="submit-hint" id="submit-hint">📍 Capture your location using GPS or enter your address manually to enable this button.</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="form-errors">
+      <p><strong>Please fix the following:</strong></p>
+      {% for field, errors in form.errors.items %}
+        {% for error in errors %}<p>• {{ error }}</p>{% endfor %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const CATEGORY   = {{ category|escapejs }};
+const LANG       = {{ language|escapejs }};
+const SIMPLIFIED = {% if simplified_mode %}true{% else %}false{% endif %};
+if (SIMPLIFIED) {
+  const msgs = {
+    en: "Step one. We are finding your location. Please wait.",
+    zu: "Isigaba sokuqala. Sithola indawo yakho. Sicela ulinde.",
+    st: "Mohato wa pele. Re batla sebaka sa hao. Kopa ema.",
+    af: "Stap een. Ons soek jou ligging. Wag asseblief.",
+  };
+  window.addEventListener('load', () => speak(msgs[LANG] || msgs.en));
+}
+</script>
+<!-- Google Maps API -->
+<script>
+  window.initMap = function() {
+    if (typeof initGoogleMap === 'function') {
+      initGoogleMap();
+    }
+  };
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"></script>
+<script src="/static/js/gps.js?v=3"></script>
+{% endblock %}

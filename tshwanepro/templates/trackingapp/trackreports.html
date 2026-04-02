@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Track Report{% endblock %}
+{% block nav_track %}bottom-nav__item--active{% endblock %}
+
+{% block content %}
+<div class="track-page">
+
+  <!-- ── Page Header ────────────────────────────────────────────── -->
+  <div class="form-header">
+    <h1>🔍 Track Your Report</h1>
+    <p>Enter your tracking ID to check the status</p>
+  </div>
+
+  <!-- ── Search Form ────────────────────────────────────────────── -->
+  <div class="form-card">
+    <form method="get" action="{% url 'trackingapp:track_report' %}">
+      <div class="search-box">
+        <input 
+          type="text" 
+          name="tracking_id" 
+          id="tracking-id-input"
+          value="{{ tracking_id|default:'' }}"
+          placeholder="Enter tracking ID (e.g., ABC12345)"
+          maxlength="20"
+        >
+        <button type="submit" class="btn btn--primary">Search</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Search Results ─────────────────────────────────────────── -->
+  {% if found == True %}
+  <div class="report-card">
+    <div class="report-card__header">
+      <div>
+        <div class="report-card__category">
+          <span>{{ report.category_icon }}</span>
+          <span>{{ report.get_category_display }}</span>
+        </div>
+      </div>
+      <span class="status-badge status-badge--{{ report.get_status_badge_color }}">
+        {{ report.get_status_display }}
+      </span>
+    </div>
+    
+    <div class="report-card__id">
+      Tracking ID: <strong>{{ report.tracking_id }}</strong>
+    </div>
+    
+    {% if report.description %}
+    <div class="report-card__description">
+      {{ report.description|truncatechars:100 }}
+    </div>
+    {% endif %}
+    
+    <div class="report-card__meta">
+      <span>📅 {{ report.created_at|date:"d M Y" }}</span>
+      {% if report.address %}
+      <span>📍 {{ report.address|truncatechars:30 }}</span>
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Status Timeline -->
+  <div class="form-card" style="margin-top: 20px;">
+    <h3 style="font-size: 16px; margin-bottom: 16px;">Status Timeline</h3>
+    
+    <div class="timeline">
+      <div class="timeline-item {% if report.status != 'pending' or report.status == 'pending' %}timeline-item--active{% endif %}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong>Report Submitted</strong>
+          <small>{{ report.created_at|date:"d M Y, H:i" }}</small>
+        </div>
+      </div>
+      
+      <div class="timeline-item {% if report.status == 'acknowledged' or report.status == 'in_progress' or report.status == 'resolved' %}timeline-item--active{% endif %}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong>Acknowledged</strong>
+          <small>Report received by municipality</small>
+        </div>
+      </div>
+      
+      <div class="timeline-item {% if report.status == 'in_progress' or report.status == 'resolved' %}timeline-item--active{% endif %}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong>In Progress</strong>
+          <small>Work has started</small>
+        </div>
+      </div>
+      
+      <div class="timeline-item {% if report.status == 'resolved' %}timeline-item--active{% endif %}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong>Resolved</strong>
+          <small>Issue has been fixed</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {% elif found == False %}
+  <div class="not-found">
+    <div class="not-found__icon">🔍</div>
+    <h2>Report Not Found</h2>
+    <p>No report found with tracking ID: <strong>{{ tracking_id }}</strong></p>
+    <p style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
+      Please check the ID and try again. Tracking IDs are case-insensitive.
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    position: relative;
+    opacity: 0.5;
+  }
+  
+  .timeline-item--active {
+    opacity: 1;
+  }
+  
+  .timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 28px;
+    bottom: -4px;
+    width: 2px;
+    background: #e2e8f0;
+  }
+  
+  .timeline-item--active:not(:last-child)::after {
+    background: var(--primary);
+  }
+  
+  .timeline-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    border: 2px solid #cbd5e1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  .timeline-item--active .timeline-dot {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  
+  .timeline-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .timeline-content strong {
+    font-size: 14px;
+  }
+  
+  .timeline-content small {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+</style>
+
+<script>
+  // Auto-focus the search input
+  document.getElementById('tracking-id-input').focus();
+</script>
+{% endblock %}

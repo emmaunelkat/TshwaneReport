@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Admin - All Reports{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  
+  <!-- Admin Header -->
+  <div class="admin-header">
+    <h1>📋 Admin Dashboard</h1>
+    <p>Manage all fault reports</p>
+  </div>
+
+  <!-- Status Dashboard -->
+  <div class="status-dashboard">
+    <div class="status-card status-card--total">
+      <span class="status-card__number">{{ status_counts.total }}</span>
+      <span class="status-card__label">Total Reports</span>
+    </div>
+    <div class="status-card status-card--pending">
+      <span class="status-card__number">{{ status_counts.pending }}</span>
+      <span class="status-card__label">Pending</span>
+    </div>
+    <div class="status-card status-card--acknowledged">
+      <span class="status-card__number">{{ status_counts.acknowledged }}</span>
+      <span class="status-card__label">Acknowledged</span>
+    </div>
+    <div class="status-card status-card--in-progress">
+      <span class="status-card__number">{{ status_counts.in_progress }}</span>
+      <span class="status-card__label">In Progress</span>
+    </div>
+    <div class="status-card status-card--resolved">
+      <span class="status-card__number">{{ status_counts.resolved }}</span>
+      <span class="status-card__label">Resolved</span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <form method="get" class="filters-form">
+      <div class="filter-group">
+        <label for="status">Status:</label>
+        <select name="status" id="status" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="category">Category:</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+          <option value="">All Categories</option>
+          {% for value, label in category_choices %}
+          <option value="{{ value }}" {% if category_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      {% if status_filter or category_filter %}
+      <a href="{% url 'reportsapp:admin_reports_list' %}" class="btn btn--sm btn--ghost">Clear Filters</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Reports Table -->
+  <div class="reports-table-container">
+    <table class="reports-table">
+      <thead>
+        <tr>
+          <th>Tracking ID</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Location</th>
+          <th>Submitted</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+        <tr>
+          <td>
+            <span class="tracking-id">{{ report.tracking_id }}</span>
+          </td>
+          <td>
+            <span class="category-badge category-badge--{{ report.category }}">
+              {{ report.category_icon }} {{ report.get_category_display }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge status-badge--{{ report.status }}">
+              {{ report.get_status_display }}
+            </span>
+          </td>
+          <td>
+            {% if report.address %}
+              {{ report.address|truncatechars:30 }}
+            {% elif report.latitude %}
+              {{ report.latitude|floatformat:4 }}, {{ report.longitude|floatformat:4 }}
+            {% else %}
+              <em>No location</em>
+            {% endif %}
+          </td>
+          <td>{{ report.created_at|date:"M d, Y H:i" }}</td>
+          <td>
+            <a href="{% url 'reportsapp:admin_report_detail' report.tracking_id %}" class="btn btn--sm btn--primary">
+              View & Update
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="no-reports">
+            <p>No reports found.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+  .admin-page {
+    max-width: 1200px;
+  }
+
+  .admin-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .admin-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .admin-header p {
+    color: var(--text-secondary);
+  }
+
+  /* Status Dashboard */
+  .status-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .status-card {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .status-card__number {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .status-card__label {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .status-card--total .status-card__number { color: #333; }
+  .status-card--pending .status-card__number { color: #dc2626; }
+  .status-card--acknowledged .status-card__number { color: #e8b923; }
+  .status-card--in-progress .status-card__number { color: #0891b2; }
+  .status-card--resolved .status-card__number { color: #4A9B2E; }
+
+  /* Filters */
+  .filters-section {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(8px);
+  }
+
+  .filters-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: end;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .filter-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .filter-group select {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background: white;
+    min-width: 150px;
+  }
+
+  /* Table */
+  .reports-table-container {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .reports-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .reports-table th,
+  .reports-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .reports-table th {
+    background: rgba(74, 155, 46, 0.9);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+
+  .reports-table tr:hover {
+    background: rgba(74, 155, 46, 0.05);
+  }
+
+  .tracking-id {
+    font-family: monospace;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .category-badge--water { background: rgba(59, 130, 246, 0.2); color: #1d4ed8; }
+  .category-badge--electricity { background: rgba(234, 179, 8, 0.2); color: #a16207; }
+  .category-badge--roads { background: rgba(107, 114, 128, 0.2); color: #374151; }
+  .category-badge--waste { background: rgba(34, 197, 94, 0.2); color: #15803d; }
+  .category-badge--other { background: rgba(156, 163, 175, 0.2); color: #4b5563; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-badge--pending { background: #fecaca; color: #991b1b; }
+  .status-badge--acknowledged { background: #fef3c7; color: #92400e; }
+  .status-badge--in_progress { background: #cffafe; color: #0e7490; }
+  .status-badge--resolved { background: #d1fae5; color: #065f46; }
+
+  .no-reports {
+    text-align: center;
+    padding: 48px;
+    color: var(--text-secondary);
+  }
+
+  .btn--sm {
+    padding: 6px 16px;
+    font-size: 14px;
+  }
+</style>
+{% endblock %}

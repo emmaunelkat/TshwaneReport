@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="{{ language|default:'en' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TshwaneReport{% endblock %} | City of Tshwane</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="/static/css/main.css">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if simplified_mode %}simplified-mode{% endif %}" style="background-image: url('/static/images/Uniegebou.jpg'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat;">
+
+  <!-- ── Top Navigation Bar ───────────────────────────────────────── -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <span class="brand-icon">🏙️</span>
+      <span class="brand-text">TshwaneReport</span>
+    </a>
+
+    <div class="navbar-actions">
+      <!-- Language Switcher -->
+      <div class="lang-switcher">
+        <span class="lang-label">Languages:</span>
+        <a href="/language/en/" class="lang-btn {% if language == 'en' %}active{% endif %}">EN</a>
+        <a href="/language/zu/" class="lang-btn {% if language == 'zu' %}active{% endif %}">ZU</a>
+        <a href="/language/st/" class="lang-btn {% if language == 'st' %}active{% endif %}">ST</a>
+        <a href="/language/af/" class="lang-btn {% if language == 'af' %}active{% endif %}">AF</a>
+      </div>
+
+      <!-- Voice Mode Toggle -->
+      <a href="/toggle-simplified/" class="voice-btn {% if simplified_mode %}voice-btn--active{% endif %}"
+         title="Toggle Voice-Guided Mode">
+        🔊 {% if simplified_mode %}Voice ON{% else %}Voice Mode{% endif %}
+      </a>
+      
+      <!-- Authentication Buttons -->
+      <div class="auth-buttons" style="margin-left: 16px; display: flex; gap: 8px;">
+        {% if user.is_authenticated %}
+          <span style="color: #666; font-size: 14px; align-self: center;">Hi, {{ user.first_name }}</span>
+          <a href="{% url 'reportsapp:logout' %}" class="btn btn--sm btn--outline">Logout</a>
+        {% else %}
+          <a href="{% url 'reportsapp:login' %}" class="btn btn--sm btn--outline">Login</a>
+          <a href="{% url 'reportsapp:register' %}" class="btn btn--sm btn--primary">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Page Content ─────────────────────────────────────────────── -->
+  <main class="main-content" style="background-color: rgba(255, 255, 255, 0.6); min-height: calc(100vh - 120px); backdrop-filter: blur(4px);">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert--{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ── Bottom Navigation ────────────────────────────────────────── -->
+  <nav class="bottom-nav">
+    <a href="/" class="bottom-nav__item {% block nav_home %}{% endblock %}">
+      <span class="bottom-nav__icon">🏠</span>
+      <span class="bottom-nav__label">Home</span>
+    </a>
+    <a href="/report/water/" class="bottom-nav__item {% block nav_report %}{% endblock %}">
+      <span class="bottom-nav__icon">📝</span>
+      <span class="bottom-nav__label">Report</span>
+    </a>
+    <a href="/track/" class="bottom-nav__item {% block nav_track %}{% endblock %}">
+      <span class="bottom-nav__icon">🔍</span>
+      <span class="bottom-nav__label">Track</span>
+    </a>
+  </nav>
+
+  <!-- ── GPS Permission Explanation Overlay ──────────────────────── -->
+  <div id="gps-overlay" class="overlay" style="display:none;">
+    <div class="overlay__card">
+      <div class="overlay__icon">📍</div>
+      <h3>Location Access Needed</h3>
+      <p>TshwaneReport needs your location to log your fault in the correct area.</p>
+      <p><strong>We do not store your location permanently.</strong> It is only used to route your report to the right municipal department.</p>
+      <button class="btn btn--primary" onclick="allowLocation()">Allow Location</button>
+      <button class="btn btn--ghost" onclick="dismissOverlay()">Enter Address Manually</button>
+    </div>
+  </div>
+
+  <!-- ── Main JS ──────────────────────────────────────────────────── -->
+  <script src="/static/js/main.js?v=2"></script>
+  {% if simplified_mode %}
+  <script src="/static/js/voice.js"></script>
+  {% endif %}
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

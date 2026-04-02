@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <!-- ── Back + Title ──────────────────────────────────────────── -->
+  <div class="form-header">
+    <a href="{% url 'reportsapp:home' %}" class="back-btn">← Back</a>
+    <h1 class="form-title">🔐 Login</h1>
+  </div>
+
+  <!-- ── Login Form ─────────────────────────────────────────────── -->
+  <div class="form-card">
+    <form method="post">
+      {% csrf_token %}
+      
+      {% if form.errors %}
+      <div class="form-errors" style="background: #fee; color: #c00; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+        <p><strong>Invalid credentials. Please try again.</strong></p>
+      </div>
+      {% endif %}
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">ID Number (13 digits)</label>
+        {{ form.id_number }}
+      </div>
+      
+      <div class="field-group" style="margin-bottom: 16px;">
+        <label class="field-label">Password</label>
+        {{ form.password }}
+      </div>
+      
+      <button type="submit" class="btn btn--primary btn--full" style="margin-top: 8px;">
+        🔓 Login
+      </button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 16px; color: #666;">
+      Don't have an account? 
+      <a href="{% url 'reportsapp:register' %}" style="color: var(--tshwane-green);">Register here</a>
+    </p>
+
+    <div style="text-align: center; margin-top: 12px;">
+      <a href="/admin/" style="font-size: 7px; color: #e0e0e0; text-decoration: none; letter-spacing: 0.5px; cursor: default;">admin</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

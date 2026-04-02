@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% block title %}Admin - Report {{ report.tracking_id }}{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  
+  <!-- Back Link -->
+  <div class="back-link">
+    <a href="{% url 'reportsapp:admin_reports_list' %}" class="btn btn--ghost">
+      ← Back to All Reports
+    </a>
+  </div>
+
+  <!-- Report Header -->
+  <div class="report-header">
+    <div class="report-header__info">
+      <h1>📋 Report Details</h1>
+      <span class="tracking-id-large">{{ report.tracking_id }}</span>
+    </div>
+    <span class="status-badge status-badge--{{ report.status }} status-badge--large">
+      {{ report.get_status_display }}
+    </span>
+  </div>
+
+  <div class="report-grid">
+    
+    <!-- Left Column: Report Info -->
+    <div class="report-info">
+      
+      <!-- Category Card -->
+      <div class="info-card">
+        <h3>Category</h3>
+        <div class="category-display">
+          <span class="category-icon">{{ report.category_icon }}</span>
+          <span class="category-name">{{ report.get_category_display }}</span>
+        </div>
+      </div>
+
+      <!-- Description Card -->
+      <div class="info-card">
+        <h3>Description</h3>
+        <p class="description-text">
+          {% if report.description %}
+            {{ report.description }}
+          {% else %}
+            <em>No description provided</em>
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Location Card -->
+      <div class="info-card">
+        <h3>📍 Location</h3>
+        {% if report.address %}
+          <p class="location-address">{{ report.address }}</p>
+        {% endif %}
+        {% if report.latitude and report.longitude %}
+          <div class="coordinates">
+            <code>Lat: {{ report.latitude }}, Lng: {{ report.longitude }}</code>
+          </div>
+          {% if google_maps_url %}
+          <a href="{{ google_maps_url }}" target="_blank" class="btn btn--outline btn--sm">
+            🗺️ View on Google Maps
+          </a>
+          {% endif %}
+        {% else %}
+          <p><em>No location data available</em></p>
+        {% endif %}
+      </div>
+
+      <!-- Photo Card -->
+      {% if report.photo %}
+      <div class="info-card">
+        <h3>📷 Photo</h3>
+        <div class="photo-container">
+          <img src="{{ report.photo.url }}" alt="Report Photo" class="report-photo">
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Timestamps -->
+      <div class="info-card">
+        <h3>Timeline</h3>
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="timeline-label">Submitted:</span>
+            <span class="timeline-value">{{ report.created_at|date:"F d, Y at H:i" }}</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-label">Last Updated:</span>
+            <span class="timeline-value">{{ report.updated_at|date:"F d, Y at H:i" }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Update Form -->
+    <div class="report-update">
+      <div class="update-card">
+        <h2>🔄 Update Report Status</h2>
+        
+        <form method="post" class="update-form">
+          {% csrf_token %}
+          
+          <div class="form-group">
+            <label for="status">New Status:</label>
+            <select name="status" id="status" class="status-select">
+              {% for value, label in status_choices %}
+              <option value="{{ value }}" {% if report.status == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="admin_notes">Admin Notes:</label>
+            <textarea 
+              name="admin_notes" 
+              id="admin_notes" 
+              rows="4" 
+              placeholder="Add notes about this report update..."
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--full">
+              💾 Update Report
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+          <a href="mailto:?subject=Report {{ report.tracking_id }}" class="btn btn--outline btn--sm btn--full">
+            📧 Email Report
+          </a>
+          <button onclick="window.print()" class="btn btn--outline btn--sm btn--full">
+            🖨️ Print Report
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+  .admin-page {
+    max-width: 1200px;
+  }
+
+  .back-link {
+    margin-bottom: 16px;
+  }
+
+  /* Report Header */
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .report-header__info h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .tracking-id-large {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 600;
+    background: rgba(74, 155, 46, 0.1);
+    color: var(--tshwane-green);
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+  }
+
+  .status-badge--large {
+    font-size: 16px;
+    padding: 8px 24px;
+  }
+
+  /* Report Grid */
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .report-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Info Cards */
+  .info-card {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .info-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* Category Display */
+  .category-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .category-icon {
+    font-size: 32px;
+  }
+
+  .category-name {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Description */
+  .description-text {
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  /* Location */
+  .location-address {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .coordinates {
+    margin-bottom: 12px;
+  }
+
+  .coordinates code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  /* Photo */
+  .photo-container {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+  }
+
+  .report-photo {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+  }
+
+  /* Timeline */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .timeline-item {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .timeline-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .timeline-value {
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  /* Update Card */
+  .update-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+    border: 2px solid var(--tshwane-green);
+  }
+
+  .update-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--tshwane-green);
+  }
+
+  .update-form .form-group {
+    margin-bottom: 20px;
+  }
+
+  .update-form label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+
+  .status-select,
+  .update-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    background: white;
+    transition: border-color 0.2s;
+  }
+
+  .status-select:focus,
+  .update-form textarea:focus {
+    outline: none;
+    border-color: var(--tshwane-green);
+  }
+
+  .update-form textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  /* Quick Actions */
+  .quick-actions {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-top: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .quick-actions h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn--full {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Status Badges */
+  .status-badge--pending { background: #fecaca; color: #991b1b; }
+  .status-badge--acknowledged { background: #fef3c7; color: #92400e; }
+  .status-badge--in_progress { background: #cffafe; color: #0e7490; }
+  .status-badge--resolved { background: #d1fae5; color: #065f46; }
+</style>
+{% endblock %}

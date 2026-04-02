@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Report Confirmed{% endblock %}
+
+{% block content %}
+<div class="confirm-page">
+
+  <!-- ── Success Icon ───────────────────────────────────────────── -->
+  <div class="confirm-icon">✅</div>
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <h1>Report Submitted!</h1>
+  <p>Your fault report has been successfully submitted to the City of Tshwane.</p>
+
+  <!-- ── Tracking ID Box ────────────────────────────────────────── -->
+  <div class="tracking-id-box">
+    <div class="tracking-id-label">Your Tracking ID</div>
+    <div class="tracking-id-value">{{ report.tracking_id }}</div>
+  </div>
+
+  <!-- ── Report Details ─────────────────────────────────────────── -->
+  <div class="confirm-details">
+    <h3>📋 Report Details</h3>
+    <dl>
+      <dt>Category</dt>
+      <dd>{{ report.category_icon }} {{ report.get_category_display }}</dd>
+      
+      <dt>Status</dt>
+      <dd><span class="status-badge status-badge--warning">{{ report.get_status_display }}</span></dd>
+      
+      <dt>Submitted</dt>
+      <dd>{{ report.created_at|date:"d M Y, H:i" }}</dd>
+      
+      {% if report.address %}
+      <dt>Location</dt>
+      <dd>{{ report.address|truncatechars:40 }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+
+  <!-- ── Action Buttons ─────────────────────────────────────────── -->
+  <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+    <a href="{% url 'trackingapp:track_report' %}?tracking_id={{ report.tracking_id }}" class="btn btn--primary btn--full">
+      🔍 Track This Report
+    </a>
+    
+    <a href="{% url 'reportsapp:home' %}" class="btn btn--outline btn--full">
+      🏠 Back to Home
+    </a>
+  </div>
+
+  <!-- ── Important Info ─────────────────────────────────────────── -->
+  <div style="margin-top: 32px; padding: 16px; background: #fef3c7; border-radius: var(--border-radius); font-size: 13px; color: #92400e; text-align: left;">
+    <strong>📌 Important:</strong><br>
+    Save your tracking ID: <strong>{{ report.tracking_id }}</strong>. You'll need it to check the status of your report.
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Copy tracking ID to clipboard
+  function copyTrackingId() {
+    const id = '{{ report.tracking_id }}';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(id).then(function() {
+        alert('Tracking ID copied: ' + id);
+      });
+    }
+  }
+  
+  // Speak confirmation if simplified mode is enabled
+  {% if simplified_mode %}
+  window.addEventListener('load', function() {
+    const message = 'Your report has been submitted. Your tracking ID is {{ report.tracking_id }}. Please save this number.';
+    speak(message);
+  });
+  {% endif %}
+</script>
+{% endblock %}
